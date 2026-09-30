@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SG Courier — Request a Delivery</title>
+<style>
+:root{--navy:#102a43;--blue:#1f5f99;--light:#f5f8fb;--line:#dbe4ec;--text:#162433;--muted:#617282;--ok:#0d7a4b}
+*{box-sizing:border-box}body{margin:0;background:var(--light);font-family:Arial,Helvetica,sans-serif;color:var(--text)}
+.wrap{max-width:720px;margin:0 auto;padding:18px}.head{background:var(--navy);color:#fff;padding:24px 20px;border-radius:16px 16px 0 0}.brand{font-size:26px;font-weight:800;letter-spacing:.3px}.tag{margin-top:5px;opacity:.86;font-size:14px}.card{background:#fff;padding:22px 20px;border-radius:0 0 16px 16px;box-shadow:0 8px 28px rgba(16,42,67,.08)}
+h1{font-size:22px;margin:0 0 6px}.intro{color:var(--muted);margin:0 0 20px;line-height:1.45}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.full{grid-column:1/-1}label{font-weight:700;font-size:14px;display:block;margin-bottom:6px}input,select,textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:13px;font:inherit;color:var(--text);background:#fff}textarea{min-height:82px;resize:vertical}input:focus,select:focus,textarea:focus{outline:3px solid rgba(31,95,153,.15);border-color:var(--blue)}button{width:100%;border:0;border-radius:11px;padding:14px 18px;background:var(--blue);color:#fff;font-weight:800;font-size:16px;cursor:pointer;margin-top:6px}button:hover{filter:brightness(.96)}.note{font-size:12px;color:var(--muted);line-height:1.4;margin-top:12px}.success{display:none;text-align:center;padding:28px 8px}.success .tick{font-size:44px;color:var(--ok)}.ref{font-size:22px;font-weight:800;margin:12px 0;color:var(--navy)}.small{color:var(--muted);line-height:1.5}.footer{text-align:center;color:var(--muted);font-size:12px;padding:16px}.required{color:#a62626}@media(max-width:600px){.wrap{padding:0}.head,.card{border-radius:0}.grid{grid-template-columns:1fr}.full{grid-column:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="head">
+    <div class="brand">SG Courier</div>
+    <div class="tag">Reliable local delivery</div>
+  </header>
+  <main class="card">
+    <section id="requestSection">
+      <h1>Request a delivery quote</h1>
+      <p class="intro">Enter the collection and delivery details below. We'll review your request and confirm your quotation.</p>
+      <form id="quoteForm">
+        <div class="grid">
+          <div class="full"><label for="pickup">Pickup address <span class="required">*</span></label><input id="pickup" name="pickup" autocomplete="street-address" required placeholder="Collection address"></div>
+          <div class="full"><label for="dropoff">Delivery address <span class="required">*</span></label><input id="dropoff" name="dropoff" required placeholder="Destination address"></div>
+          <div><label for="parcel">Parcel type <span class="required">*</span></label><select id="parcel" name="parcel" required><option value="">Select</option><option>Documents</option><option>Small parcel</option><option>Medium parcel</option><option>Large parcel</option><option>Other</option></select></div>
+          <div><label for="weight">Approx. weight</label><select id="weight" name="weight"><option>Under 1 kg</option><option>1–5 kg</option><option>5–10 kg</option><option>10–20 kg</option><option>Over 20 kg</option><option>Not sure</option></select></div>
+          <div><label for="sender">Your name <span class="required">*</span></label><input id="sender" name="sender" autocomplete="name" required></div>
+          <div><label for="phone">Your WhatsApp / phone <span class="required">*</span></label><input id="phone" name="phone" type="tel" autocomplete="tel" required placeholder="e.g. 07... or 06..."></div>
+          <div><label for="recipient">Recipient name <span class="required">*</span></label><input id="recipient" name="recipient" required></div>
+          <div><label for="recipientPhone">Recipient phone <span class="required">*</span></label><input id="recipientPhone" name="recipientPhone" type="tel" required></div>
+          <div class="full"><label for="notes">Parcel / delivery notes</label><textarea id="notes" name="notes" placeholder="Anything we should know about the parcel, collection or delivery?"></textarea></div>
+          <div class="full"><button type="submit">Request Quote</button><div class="note">Submitting this form requests a quotation. It does not confirm a delivery until SG Courier approves the quote and you accept it.</div></div>
+        </div>
+      </form>
+    </section>
+    <section id="successSection" class="success" aria-live="polite">
+      <div class="tick">✓</div>
+      <h1>Request received</h1>
+      <p>Your SG Courier quote request has been recorded.</p>
+      <div class="ref" id="reference"></div>
+      <p class="small">Please keep this reference. SG Courier will contact you to confirm the quotation.</p>
+      <button id="another" type="button">Make Another Request</button>
+    </section>
+  </main>
+  <div class="footer">SG Courier · Sapphire Group Pty Ltd</div>
+</div>
+<script>
+(function(){
+ const form=document.getElementById('quoteForm');
+ const request=document.getElementById('requestSection');
+ const success=document.getElementById('successSection');
+ const reference=document.getElementById('reference');
+ const another=document.getElementById('another');
+ function makeRef(){const d=new Date();const date=String(d.getFullYear()).slice(-2)+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');return 'SG-'+date+'-'+Math.floor(1000+Math.random()*9000)}
+ form.addEventListener('submit',function(e){e.preventDefault();if(!form.reportValidity())return;const data=Object.fromEntries(new FormData(form).entries());data.reference=makeRef();data.createdAt=new Date().toISOString();try{const list=JSON.parse(localStorage.getItem('sg_customer_requests')||'[]');list.push(data);localStorage.setItem('sg_customer_requests',JSON.stringify(list));}catch(err){}reference.textContent=data.reference;request.style.display='none';success.style.display='block';window.scrollTo({top:0,behavior:'smooth'});});
+ another.addEventListener('click',function(){form.reset();success.style.display='none';request.style.display='block';window.scrollTo({top:0,behavior:'smooth'});});
+})();
+</script>
+</body>
+</html>
