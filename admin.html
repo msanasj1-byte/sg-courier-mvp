@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>SG Courier Admin</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      color: #222;
+    }
+
+    header {
+      background: #111827;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 26px;
+    }
+
+    header p {
+      margin: 6px 0 0;
+      color: #d1d5db;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: white;
+      padding: 18px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .card h3 {
+      margin-top: 0;
+      color: #6b7280;
+      font-size: 14px;
+    }
+
+    .number {
+      font-size: 28px;
+      font-weight: bold;
+      color: #111827;
+    }
+
+    .section-title {
+      margin-top: 25px;
+      margin-bottom: 10px;
+    }
+
+    .delivery {
+      background: white;
+      padding: 16px;
+      margin-bottom: 12px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+
+    .delivery strong {
+      color: #111827;
+    }
+
+    .row {
+      margin: 7px 0;
+    }
+
+    .status {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    .pending {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .accepted {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .completed {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    button {
+      border: none;
+      padding: 10px 14px;
+      margin-top: 8px;
+      margin-right: 5px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .accept {
+      background: #2563eb;
+      color: white;
+    }
+
+    .complete {
+      background: #16a34a;
+      color: white;
+    }
+
+    .delete {
+      background: #dc2626;
+      color: white;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 30px;
+      background: white;
+      border-radius: 12px;
+      color: #6b7280;
+    }
+
+    footer {
+      text-align: center;
+      padding: 25px;
+      color: #6b7280;
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1>SG Courier Admin</h1>
+  <p>Delivery Management Dashboard</p>
+</header>
+
+<div class="container">
+
+  <div class="stats">
+
+    <div class="card">
+     
