@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>SG Courier Admin</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f4f6f8;
+      color: #1f2937;
+    }
+
+    header {
+      background: #111827;
+      color: white;
+      padding: 22px 18px;
+    }
+
+    .header-inner {
+      max-width: 1000px;
+      margin: auto;
+    }
+
+    header h1 {
+      font-size: 26px;
+      margin-bottom: 5px;
+    }
+
+    header p {
+      color: #d1d5db;
+    }
+
+    main {
+      max-width: 1000px;
+      margin: 30px auto;
+      padding: 0 18px;
+    }
+
+    .status {
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #86efac;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 25px;
+      font-weight: bold;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 22px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .card h2 {
+      margin-bottom: 15px;
+      font-size: 20px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 15px;
+    }
+
+    .stat-box {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 18px;
+    }
+
+    .stat-box strong {
+      display: block;
+      font-size: 26px;
+      margin-top: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th,
+    td {
+      text-align: left;
+      padding: 12px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    th {
+      background: #f9fafb;
+    }
+
+    .empty {
+      text-align: center;
+      color: #6b7280;
+      padding: 30px;
+    }
+
+    footer {
+      text-align: center;
+      color: #6b7280;
+      padding: 30px 15px;
+    }
+
+    @media (max-width: 600px) {
+      table {
+        font-size: 14px;
+      }
+
+      th,
+      td {
+        padding: 8px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <div class="header-inner">
+      <h1>SG Courier Admin</h1>
+      <p>Administration Dashboard</p>
+    </div>
+  </header>
+
+  <main>
+
+    <div class="status">
+      ✓ SG Courier Admin page is working
+    </div>
+
+    <div class="card">
+      <h2>Dashboard</h2>
+
+      <div class="stats">
+
+        <div class="stat-box">
+          Customer Requests
+          <strong>0</strong>
+        </div>
+
+        <div class="stat-box">
+          Active Deliveries
+          <strong>0</strong>
+        </div>
+
+        <div class="stat-box">
+          Completed
+          <strong>0</strong>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Customer Requests</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Customer</th>
+            <th>Pickup</th>
+            <th>Destination</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td colspan="4" class="empty">
+              No customer requests yet.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+    </div>
+
+  </main>
+
+  <footer>
+    SG Courier Admin
+  </footer>
+
+</body>
+</html>
