@@ -1,272 +1,56 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import {
+    getFirestore,
+    collection,
+    addDoc,
+    serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-  <title>SG Courier - Request Delivery</title>
+  const firebaseConfig = {
+    apiKey: "AIzaSyD6h1jN0RgXBbIqrjri9gSPUZbymFfPtLo",
+    authDomain: "sg-courier.firebaseapp.com",
+    projectId: "sg-courier",
+    storageBucket: "sg-courier.firebasestorage.app",
+    messagingSenderId: "718910401322",
+    appId: "1:718910401322:web:6ff7a20babca071baa4c53",
+    measurementId: "G-KXQGW871V3"
+  };
 
-  <style>
-    * {
-      box-sizing: border-box;
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const form = document.getElementById("courierForm");
+
+  form.addEventListener("submit", async function(event) {
+    event.preventDefault();
+
+    const button = form.querySelector('button[type="submit"]');
+    button.disabled = true;
+    button.textContent = "Sending request…";
+
+    try {
+      await addDoc(collection(db, "deliveryRequests"), {
+        name: document.getElementById("name").value.trim(),
+        phone: document.getElementById("phone").value.trim(),
+        pickupAddress: document.getElementById("pickup").value.trim(),
+        deliveryAddress: document.getElementById("delivery").value.trim(),
+        parcelType: document.getElementById("parcel").value,
+        weightKg: document.getElementById("weight").value
+          ? Number(document.getElementById("weight").value)
+          : null,
+        notes: document.getElementById("notes").value.trim(),
+        status: "new",
+        createdAt: serverTimestamp()
+      });
+
+      alert("Your delivery request was sent to SG Courier.");
+      form.reset();
+    } catch (error) {
+      console.error("Request submission failed:", error);
+      alert("The request could not be saved. Please send me a screenshot of this error.");
+    } finally {
+      button.disabled = false;
+      button.textContent = "Send Delivery Request";
     }
-
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f4f6f8;
-      color: #222;
-    }
-
-    header {
-      background: #111827;
-      color: white;
-      text-align: center;
-      padding: 25px 15px;
-    }
-
-    header h1 {
-      margin: 0;
-      font-size: 32px;
-    }
-
-    header p {
-      margin: 8px 0 0;
-      color: #d1d5db;
-    }
-
-    .container {
-      max-width: 600px;
-      margin: 25px auto;
-      padding: 20px;
-    }
-
-    .card {
-      background: white;
-      border-radius: 14px;
-      padding: 25px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-    }
-
-    h2 {
-      margin-top: 0;
-    }
-
-    label {
-      display: block;
-      margin-top: 16px;
-      margin-bottom: 6px;
-      font-weight: bold;
-    }
-
-    input,
-    select,
-    textarea {
-      width: 100%;
-      padding: 13px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 16px;
-    }
-
-    textarea {
-      min-height: 90px;
-      resize: vertical;
-    }
-
-    button {
-      width: 100%;
-      margin-top: 22px;
-      padding: 15px;
-      border: none;
-      border-radius: 8px;
-      background: #16a34a;
-      color: white;
-      font-size: 18px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #15803d;
-    }
-
-    .note {
-      margin-top: 15px;
-      font-size: 14px;
-      color: #666;
-      text-align: center;
-    }
-
-    footer {
-      text-align: center;
-      padding: 25px;
-      color: #666;
-      font-size: 14px;
-    }
-  </style>
-</head>
-
-<body>
-
-<header>
-  <h1>SG Courier</h1>
-  <p>Fast • Safe • Reliable Delivery</p>
-</header>
-
-<div class="container">
-
-  <div class="card">
-
-    <h2>Request a Delivery</h2>
-
-    <p>
-      Complete the form below and send your delivery request to SG Courier.
-    </p>
-
-    <form id="courierForm">
-
-      <label for="name">Your Name</label>
-      <input
-        type="text"
-        id="name"
-        placeholder="Enter your full name"
-        required
-      >
-
-      <label for="phone">Phone / WhatsApp Number</label>
-      <input
-        type="tel"
-        id="phone"
-        placeholder="Example: 0712345678"
-        required
-      >
-
-      <label for="pickup">Pickup Address</label>
-      <input
-        type="text"
-        id="pickup"
-        placeholder="Where should we collect?"
-        required
-      >
-
-      <label for="delivery">Delivery Address</label>
-      <input
-        type="text"
-        id="delivery"
-        placeholder="Where should we deliver?"
-        required
-      >
-
-      <label for="parcel">Parcel Type</label>
-      <select id="parcel" required>
-        <option value="">Select parcel type</option>
-        <option value="Document">Document</option>
-        <option value="Small Parcel">Small Parcel</option>
-        <option value="Medium Parcel">Medium Parcel</option>
-        <option value="Large Parcel">Large Parcel</option>
-      </select>
-
-      <label for="weight">Approximate Weight (kg)</label>
-      <input
-        type="number"
-        id="weight"
-        min="0"
-        step="0.1"
-        placeholder="Example: 2"
-      >
-
-      <label for="notes">Additional Information</label>
-      <textarea
-        id="notes"
-        placeholder="Describe the parcel or give special collection/delivery instructions"
-      ></textarea>
-
-      <button type="submit">
-        Send Delivery Request
-      </button>
-
-    </form>
-
-    <div class="note">
-      Your request will be sent directly to SG Courier via WhatsApp.
-    </div>
-
-  </div>
-
-</div>
-
-<footer>
-  SG Courier • Sapphire Group Pty Ltd
-</footer>
-
-<script>
-
-  document
-    .getElementById("courierForm")
-    .addEventListener("submit", function(event) {
-
-      event.preventDefault();
-
-      const name =
-        document.getElementById("name").value;
-
-      const phone =
-        document.getElementById("phone").value;
-
-      const pickup =
-        document.getElementById("pickup").value;
-
-      const delivery =
-        document.getElementById("delivery").value;
-
-      const parcel =
-        document.getElementById("parcel").value;
-
-      const weight =
-        document.getElementById("weight").value || "Not specified";
-
-      const notes =
-        document.getElementById("notes").value || "None";
-
-      const message =
-`SG COURIER - NEW DELIVERY REQUEST
-
-Customer: ${name}
-
-Customer Phone:
-${phone}
-
-Pickup Address:
-${pickup}
-
-Delivery Address:
-${delivery}
-
-Parcel Type:
-${parcel}
-
-Approximate Weight:
-${weight} kg
-
-Additional Information:
-${notes}
-
-Please provide me with a delivery quote.`;
-
-      const whatsappNumber = "27655833283";
-
-      const url =
-        "https://wa.me/" +
-        whatsappNumber +
-        "?text=" +
-        encodeURIComponent(message);
-
-      window.open(url, "_blank");
-
-    });
-
+  });
 </script>
-
-</body>
-</html>
