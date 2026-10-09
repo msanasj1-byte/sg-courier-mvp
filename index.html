@@ -1,56 +1,129 @@
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-  import {
-    getFirestore,
-    collection,
-    addDoc,
-    serverTimestamp
-  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyD6h1jN0RgXBbIqrjri9gSPUZbymFfPtLo",
-    authDomain: "sg-courier.firebaseapp.com",
-    projectId: "sg-courier",
-    storageBucket: "sg-courier.firebasestorage.app",
-    messagingSenderId: "718910401322",
-    appId: "1:718910401322:web:6ff7a20babca071baa4c53",
-    measurementId: "G-KXQGW871V3"
-  };
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SG Courier - Request a Delivery</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Arial, sans-serif; background: #f4f6f8; color: #222; }
+    header { background: #111827; color: white; text-align: center; padding: 24px 15px; }
+    header h1 { margin: 0; }
+    main { max-width: 620px; margin: 24px auto; padding: 0 16px; }
+    form { background: white; padding: 22px; border-radius: 14px; box-shadow: 0 4px 15px #0001; }
+    label { display: block; margin: 14px 0 6px; font-weight: bold; }
+    input, select, textarea, button { width: 100%; padding: 12px; font: inherit; border-radius: 8px; }
+    input, select, textarea { border: 1px solid #cbd5e1; }
+    textarea { min-height: 85px; }
+    button { margin-top: 18px; border: 0; background: #1f5f99; color: white; font-weight: bold; cursor: pointer; }
+    button:disabled { opacity: .6; }
+    #message { margin-top: 14px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>SG Courier</h1>
+    <p>Request a delivery quote</p>
+  </header>
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const form = document.getElementById("courierForm");
+  <main>
+    <form id="courierForm">
+      <label for="name">Your name *</label>
+      <input id="name" required>
 
-  form.addEventListener("submit", async function(event) {
-    event.preventDefault();
+      <label for="phone">Your WhatsApp / phone *</label>
+      <input id="phone" type="tel" required>
 
-    const button = form.querySelector('button[type="submit"]');
-    button.disabled = true;
-    button.textContent = "Sending request…";
+      <label for="pickup">Pickup address *</label>
+      <input id="pickup" required>
 
-    try {
-      await addDoc(collection(db, "deliveryRequests"), {
-        name: document.getElementById("name").value.trim(),
-        phone: document.getElementById("phone").value.trim(),
-        pickupAddress: document.getElementById("pickup").value.trim(),
-        deliveryAddress: document.getElementById("delivery").value.trim(),
-        parcelType: document.getElementById("parcel").value,
-        weightKg: document.getElementById("weight").value
-          ? Number(document.getElementById("weight").value)
-          : null,
-        notes: document.getElementById("notes").value.trim(),
-        status: "new",
-        createdAt: serverTimestamp()
-      });
+      <label for="delivery">Delivery address *</label>
+      <input id="delivery" required>
 
-      alert("Your delivery request was sent to SG Courier.");
-      form.reset();
-    } catch (error) {
-      console.error("Request submission failed:", error);
-      alert("The request could not be saved. Please send me a screenshot of this error.");
-    } finally {
-      button.disabled = false;
-      button.textContent = "Send Delivery Request";
-    }
-  });
-</script>
+      <label for="recipient">Recipient name</label>
+      <input id="recipient">
+
+      <label for="recipientPhone">Recipient phone</label>
+      <input id="recipientPhone" type="tel">
+
+      <label for="parcel">Parcel type *</label>
+      <select id="parcel" required>
+        <option value="">Select parcel type</option>
+        <option>Documents</option>
+        <option>Small parcel</option>
+        <option>Medium parcel</option>
+        <option>Large parcel</option>
+        <option>Other</option>
+      </select>
+
+      <label for="weight">Approximate weight in kg</label>
+      <input id="weight" type="number" min="0" step="0.1">
+
+      <label for="notes">Parcel or delivery notes</label>
+      <textarea id="notes"></textarea>
+
+      <button type="submit">Send Delivery Request</button>
+      <p id="message" role="status"></p>
+    </form>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import {
+      getFirestore, collection, addDoc, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD6h1jN0RgXBbIqrjri9gSPUZbymFfPtLo",
+      authDomain: "sg-courier.firebaseapp.com",
+      projectId: "sg-courier",
+      storageBucket: "sg-courier.firebasestorage.app",
+      messagingSenderId: "718910401322",
+      appId: "1:718910401322:web:6ff7a20babca071baa4c53",
+      measurementId: "G-KXQGW871V3"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const form = document.getElementById("courierForm");
+    const message = document.getElementById("message");
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const button = form.querySelector('button[type="submit"]');
+      button.disabled = true;
+      button.textContent = "Sending request…";
+      message.textContent = "";
+
+      try {
+        await addDoc(collection(db, "deliveryRequests"), {
+          name: document.getElementById("name").value.trim(),
+          phone: document.getElementById("phone").value.trim(),
+          pickupAddress: document.getElementById("pickup").value.trim(),
+          deliveryAddress: document.getElementById("delivery").value.trim(),
+          recipientName: document.getElementById("recipient").value.trim(),
+          recipientPhone: document.getElementById("recipientPhone").value.trim(),
+          parcelType: document.getElementById("parcel").value,
+          weightKg: document.getElementById("weight").value
+            ? Number(document.getElementById("weight").value)
+            : null,
+          notes: document.getElementById("notes").value.trim(),
+          status: "new",
+          createdAt: serverTimestamp()
+        });
+
+        message.textContent = "Request sent. SG Courier will contact you with a quote.";
+        form.reset();
+      } catch (error) {
+        console.error("Request submission failed:", error);
+        message.textContent = "The request could not be saved. Please send me a screenshot of this message.";
+      } finally {
+        button.disabled = false;
+        button.textContent = "Send Delivery Request";
+      }
+    });
+  </script>
+</body>
+</html>
