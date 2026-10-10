@@ -154,14 +154,14 @@
     </section>
 
     <section id="dashboard" hidden>
-      <div class="status">✓ Signed in to SG Courier Admin</div>
+      <div class="status" id="dashboardStatus">✓ Signed in to SG Courier Admin</div>
 
       <div class="card">
         <h2>Dashboard</h2>
         <div class="stats">
-          <div class="stat-box">Customer Requests<strong>0</strong></div>
-          <div class="stat-box">Active Deliveries<strong>0</strong></div>
-          <div class="stat-box">Completed<strong>0</strong></div>
+          <div class="stat-box">Customer Requests<strong id="requestCount">0</strong></div>
+          <div class="stat-box">Active Deliveries<strong id="activeCount">0</strong></div>
+          <div class="stat-box">Completed<strong id="completedCount">0</strong></div>
         </div>
       </div>
 
@@ -176,10 +176,8 @@
               <th>Status</th>
             </tr>
           </thead>
-          <tbody>
-            <tr>
-              <td colspan="4" class="empty">No customer requests yet.</td>
-            </tr>
+          <tbody id="requestsTableBody">
+            <tr><td colspan="4" class="empty">Loading customer requests…</td></tr>
           </tbody>
         </table>
       </div>
@@ -190,6 +188,7 @@
 
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyD6h1jN0RgXBbIqrjri9gSPUZbymFfPtLo",
@@ -203,16 +202,19 @@
 
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
+    const db = firebase.firestore();
 
     const loginPanel = document.getElementById("loginPanel");
     const dashboard = document.getElementById("dashboard");
     const loginMessage = document.getElementById("loginMessage");
     const signOutButton = document.getElementById("signOutButton");
+    const dashboardStatus = document.getElementById("dashboardStatus");
+    const requestsTableBody = document.getElementById("requestsTableBody");
+    let unsubscribeRequests = null;
 
     document.getElementById("loginForm").addEventListener("submit", async (event) => {
       event.preventDefault();
       loginMessage.textContent = "Signing in…";
-
       try {
         await auth.signInWithEmailAndPassword(
           document.getElementById("email").value.trim(),
@@ -221,14 +223,108 @@
         loginMessage.textContent = "";
       } catch (error) {
         loginMessage.textContent = "Sign-in failed. Check the email and password.";
-        console.error(error);
+        console.error("Admin sign-in failed:", error);
       }
     });
+
+    function appendCell(row, value) {
+      const cell = document.createElement("td");
+      cell.textContent = value || "—";
+      row.appendChild(cell);
+    }
+
+    function renderRequests(snapshot) {
+      const requests = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      requests.sort((a, b) => {
+        const aTime = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0;
+        const bTime = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0;
+        return bTime - aTime;
+      });
+
+      const activeStatuses = [
+        "assigned", "accepted", "picked up", "picked-up", "in transit",
+        "in-transit", "out for delivery", "out-for-delivery"
+      ];
+      const completedStatuses = ["completed", "delivered"];
+      const active = requests.filter((request) =>
+        activeStatuses.includes(String(request.status || "").toLowerCase())
+      ).length;
+      const completed = requests.filter((request) =>
+        completedStatuses.includes(String(request.status || "").toLowerCase())
+      ).length;
+
+      document.getElementById("requestCount").textContent = requests.length;
+      document.getElementById("activeCount").textContent = active;
+      document.getElementById("completedCount").textContent = completed;
+      requestsTableBody.replaceChildren();
+
+      if (requests.length === 0) {
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+        cell.colSpan = 4;
+        cell.className = "empty";
+        cell.textContent = "No customer requests yet.";
+        row.appendChild(cell);
+        requestsTableBody.appendChild(row);
+        return;
+      }
+
+      requests.forEach((request) => {
+        const row = document.createElement("tr");
+        const customer = document.createElement("td");
+        const name = document.createElement("strong");
+        name.textContent = request.name || "Customer";
+        customer.appendChild(name);
+        if (request.phone) {
+          customer.appendChild(document.createElement("br"));
+          customer.appendChild(document.createTextNode(request.phone));
+        }
+        row.appendChild(customer);
+        appendCell(row, request.pickupAddress);
+        appendCell(row, request.deliveryAddress);
+        appendCell(row, request.status || "new");
+        requestsTableBody.appendChild(row);
+      });
+    }
+
+    function watchRequests() {
+      if (unsubscribeRequests) unsubscribeRequests();
+      dashboardStatus.textContent = "✓ Signed in. Loading customer requests…";
+      dashboardStatus.classList.remove("error");
+
+      unsubscribeRequests = db.collection("deliveryRequests").onSnapshot(
+        (snapshot) => {
+          dashboardStatus.textContent = "✓ Signed in to SG Courier Admin";
+          dashboardStatus.classList.remove("error");
+          renderRequests(snapshot);
+        },
+        (error) => {
+          console.error("Could not read deliveryRequests:", error);
+          dashboardStatus.textContent =
+            "Signed in, but requests could not be loaded. Check Firestore rules and the deliveryRequests collection.";
+          dashboardStatus.classList.add("error");
+          requestsTableBody.replaceChildren();
+          const row = document.createElement("tr");
+          const cell = document.createElement("td");
+          cell.colSpan = 4;
+          cell.className = "empty";
+          cell.textContent = "Could not load requests. Please check the Firestore rules.";
+          row.appendChild(cell);
+          requestsTableBody.appendChild(row);
+        }
+      );
+    }
 
     auth.onAuthStateChanged((user) => {
       loginPanel.hidden = Boolean(user);
       dashboard.hidden = !user;
       signOutButton.hidden = !user;
+      if (user) {
+        watchRequests();
+      } else if (unsubscribeRequests) {
+        unsubscribeRequests();
+        unsubscribeRequests = null;
+      }
     });
 
     signOutButton.addEventListener("click", () => auth.signOut());
