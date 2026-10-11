@@ -3,105 +3,168 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SG Courier - Request a Delivery</title>
+  <meta name="theme-color" content="#111827">
+  <title>SG Courier | Request a Delivery Quote</title>
   <style>
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: Arial, sans-serif; background: #f4f6f8; color: #222; }
-    header { background: #111827; color: white; text-align: center; padding: 24px 15px; }
-    header h1 { margin: 0; }
-    header p { margin: 8px 0 0; color: #d1d5db; }
-    main { max-width: 650px; margin: 24px auto; padding: 0 16px; }
-    form, .route-card { background: white; padding: 22px; border-radius: 14px; box-shadow: 0 4px 15px #0001; }
-    label { display: block; margin: 14px 0 6px; font-weight: bold; }
-    input, select, textarea, button { width: 100%; padding: 13px; border: 1px solid #cbd5e1; border-radius: 8px; font: inherit; }
-    textarea { min-height: 76px; resize: vertical; }
-    button { margin-top: 14px; background: #111827; border: 0; color: white; font-weight: bold; cursor: pointer; }
-    button:disabled { opacity: .6; cursor: wait; }
-    .hint { color: #596273; font-size: 14px; line-height: 1.45; margin: 7px 0 0; }
-    .weight-help { background: #f8fafc; padding: 12px; border-radius: 8px; margin-top: 8px; font-size: 14px; line-height: 1.45; }
-    #routeStatus { margin-top: 12px; font-weight: bold; }
-    #routeMap { height: 260px; margin-top: 12px; border-radius: 10px; background: #e5e7eb; display: none; }
-    #message { margin-top: 16px; font-weight: bold; }
-    footer { text-align: center; color: #6b7280; padding: 25px 15px; }
+    body { margin: 0; background: #f3f6fa; color: #182230; font-family: Arial, Helvetica, sans-serif; }
+    header { padding: 25px 18px; background: #111827; color: white; }
+    .header-inner, main, footer { width: min(760px, 100%); margin: auto; }
+    header h1 { margin: 0; font-size: 28px; }
+    header p { margin: 7px 0 0; color: #d1d5db; }
+    main { padding: 22px 16px; }
+    .card { background: white; padding: 22px; border-radius: 14px; box-shadow: 0 4px 16px #11182712; }
+    h2 { margin: 0 0 8px; font-size: 22px; }
+    .intro, .help { color: #596579; line-height: 1.5; }
+    .intro { margin: 0 0 20px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .field.full { grid-column: 1 / -1; }
+    label { display: block; margin: 0 0 6px; font-weight: 700; font-size: 14px; }
+    input, select, textarea {
+      width: 100%; padding: 12px; border: 1px solid #cbd5e1;
+      border-radius: 8px; background: white; color: #182230; font: inherit;
+    }
+    textarea { min-height: 84px; resize: vertical; }
+    input:focus, select:focus, textarea:focus { outline: 3px solid #2563eb25; border-color: #2563eb; }
+    .help { margin: 6px 0 0; font-size: 12px; }
+    button {
+      width: 100%; margin-top: 18px; padding: 14px; border: 0;
+      border-radius: 9px; background: #111827; color: white;
+      font-size: 16px; font-weight: 700; cursor: pointer;
+    }
+    button:disabled { opacity: .65; cursor: wait; }
+    .notice {
+      margin-top: 14px; padding: 12px; border-radius: 8px;
+      background: #eff6ff; color: #1e3a8a; font-size: 13px; line-height: 1.45;
+    }
+    .message { display: none; margin-top: 16px; padding: 13px; border-radius: 8px; line-height: 1.45; }
+    .message.error { display: block; background: #fef2f2; color: #991b1b; }
+    #successPanel { display: none; }
+    .reference { overflow-wrap: anywhere; font-weight: 700; }
+    footer { padding: 4px 16px 24px; text-align: center; color: #64748b; font-size: 12px; }
+    @media (max-width: 600px) {
+      .grid { grid-template-columns: 1fr; }
+      .field.full { grid-column: auto; }
+      main { padding: 14px 10px; }
+      .card { padding: 18px; }
+    }
   </style>
 </head>
 <body>
   <header>
-    <h1>SG Courier</h1>
-    <p>Request a delivery quote</p>
+    <div class="header-inner">
+      <h1>SG Courier</h1>
+      <p>Request a delivery quote</p>
+    </div>
   </header>
+
   <main>
-    <form id="courierForm">
-      <label for="name">Your name *</label>
-      <input id="name" autocomplete="name" required>
+    <section class="card" id="formPanel">
+      <h2>Delivery details</h2>
+      <p class="intro">Send us the collection, delivery and parcel details. SG Courier will review the route and send you a quote.</p>
 
-      <label for="phone">Your WhatsApp / phone *</label>
-      <input id="phone" type="tel" autocomplete="tel" required>
+      <form id="quoteForm">
+        <div class="grid">
+          <div class="field full">
+            <label for="pickup">Pickup address *</label>
+            <input id="pickup" name="pickup" autocomplete="street-address" required placeholder="Street address, suburb and town">
+          </div>
 
-      <label for="pickup">Pickup address *</label>
-      <input id="pickup" autocomplete="street-address" placeholder="Street, suburb, town" required>
+          <div class="field full">
+            <label for="dropoff">Delivery address *</label>
+            <input id="dropoff" name="dropoff" required placeholder="Street address, suburb and town">
+          </div>
 
-      <label for="delivery">Delivery address *</label>
-      <input id="delivery" placeholder="Street, suburb, town" required>
+          <div class="field">
+            <label for="parcel">Parcel type *</label>
+            <select id="parcel" name="parcel" required>
+              <option value="">Choose parcel type</option>
+              <option>Documents</option>
+              <option>Small parcel</option>
+              <option>Medium parcel</option>
+              <option>Large parcel</option>
+              <option>Other</option>
+            </select>
+          </div>
 
-      <label for="recipient">Recipient name</label>
-      <input id="recipient" autocomplete="name">
+          <div class="field">
+            <label for="weight">Approximate parcel weight</label>
+            <select id="weight" name="weight">
+              <option value="not_sure">Not sure</option>
+              <option value="0.5">Under 1 kg</option>
+              <option value="1.5">1–2 kg</option>
+              <option value="3.5">Over 2–5 kg</option>
+              <option value="7.5">Over 5–10 kg</option>
+              <option value="15">Over 10–20 kg</option>
+              <option value="21">Over 20 kg</option>
+            </select>
+            <p class="help">Choose an estimate if you can. If you are unsure, select “Not sure”; the driver can check it at collection.</p>
+          </div>
 
-      <label for="recipientPhone">Recipient phone</label>
-      <input id="recipientPhone" type="tel" autocomplete="tel">
+          <div class="field">
+            <label for="length">Length (cm), if known</label>
+            <input id="length" name="lengthCm" type="number" min="0" step="0.1" placeholder="Optional">
+          </div>
 
-      <label for="parcel">Parcel type *</label>
-      <select id="parcel" required>
-        <option value="">Select parcel type</option>
-        <option>Documents</option>
-        <option>Small parcel</option>
-        <option>Medium parcel</option>
-        <option>Large parcel</option>
-        <option>Other</option>
-      </select>
+          <div class="field">
+            <label for="width">Width (cm), if known</label>
+            <input id="width" name="widthCm" type="number" min="0" step="0.1" placeholder="Optional">
+          </div>
 
-      <label for="parcelSize">Parcel size *</label>
-      <select id="parcelSize" required>
-        <option value="">Choose the closest size</option>
-        <option value="document">Document / envelope</option>
-        <option value="small">Small: hand-held</option>
-        <option value="medium">Medium: shoebox size</option>
-        <option value="large">Large: needs a bigger space</option>
-        <option value="unsure">Not sure</option>
-      </select>
+          <div class="field">
+            <label for="height">Height (cm), if known</label>
+            <input id="height" name="heightCm" type="number" min="0" step="0.1" placeholder="Optional">
+          </div>
 
-      <label for="weightRange">Approximate weight *</label>
-      <select id="weightRange" required>
-        <option value="">Choose a range</option>
-        <option value="0-2">Up to 2 kg</option>
-        <option value="2-5">Over 2 kg to 5 kg</option>
-        <option value="5-10">Over 5 kg to 10 kg</option>
-        <option value="10-20">Over 10 kg to 20 kg</option>
-        <option value="not_sure">Not sure</option>
-      </select>
-      <div class="weight-help">No scale? Choose your best estimate. If you have a bathroom scale, weigh yourself, then weigh yourself holding the parcel; the difference is an estimate. SG Courier will confirm the parcel before collection.</div>
+          <div class="field">
+            <label for="sender">Your name *</label>
+            <input id="sender" name="sender" autocomplete="name" required>
+          </div>
 
-      <section class="route-card" aria-labelledby="routeTitle" style="margin-top:18px">
-        <label id="routeTitle" for="routeButton">Driving route distance</label>
-        <p class="hint">Calculate an estimated driving route from the pickup and delivery addresses. The addresses are sent to Google Maps for this calculation.</p>
-        <button id="routeButton" type="button">Calculate route distance</button>
-        <div id="routeStatus" role="status">Distance has not been calculated yet.</div>
-        <div id="routeMap" aria-label="Estimated driving route map"></div>
-      </section>
+          <div class="field">
+            <label for="phone">Your WhatsApp / phone *</label>
+            <input id="phone" name="phone" type="tel" autocomplete="tel" required placeholder="e.g. 071 234 5678">
+          </div>
 
-      <label for="notes">Parcel or delivery notes</label>
-      <textarea id="notes" placeholder="Optional details for SG Courier"></textarea>
+          <div class="field">
+            <label for="recipient">Recipient name *</label>
+            <input id="recipient" name="recipient" required>
+          </div>
 
-      <button id="submitButton" type="submit">Send Delivery Request</button>
-      <div id="message" role="status" aria-live="polite"></div>
-    </form>
+          <div class="field">
+            <label for="recipientPhone">Recipient phone *</label>
+            <input id="recipientPhone" name="recipientPhone" type="tel" required>
+          </div>
+
+          <div class="field full">
+            <label for="notes">Parcel or delivery notes</label>
+            <textarea id="notes" name="notes" placeholder="Anything we should know about the parcel or delivery?"></textarea>
+          </div>
+        </div>
+
+        <div class="notice">
+          This form requests a quote; it does not confirm a delivery. Route distance is marked pending until the route is checked. Please do not include sensitive personal information in the notes.
+        </div>
+
+        <button id="submitButton" type="submit">Send quote request</button>
+        <div id="formMessage" class="message" role="status" aria-live="polite"></div>
+      </form>
+    </section>
+
+    <section class="card" id="successPanel" aria-live="polite">
+      <h2>Request received</h2>
+      <p>Thank you. SG Courier has received your quote request.</p>
+      <p>Your request reference: <span class="reference" id="reference"></span></p>
+      <p class="help">We will contact you to confirm the quote. The delivery is not booked until the quote is approved and accepted.</p>
+      <button id="anotherButton" type="button">Make another request</button>
+    </section>
   </main>
-  <footer>SG Courier</footer>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  <footer>SG Courier · Sapphire Group Pty Ltd</footer>
 
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyD6h1jN0RgXBbIqrjri9gSPUZbymFfPtLo",
       authDomain: "sg-courier.firebaseapp.com",
@@ -112,177 +175,82 @@
       measurementId: "G-KXQGW871V3"
     };
 
-    // Add a browser key restricted to this GitHub Pages website and to the
-    // Maps JavaScript API / Routes API. Do not use an unrestricted key.
-    const GOOGLE_MAPS_API_KEY = "ADD_RESTRICTED_GOOGLE_MAPS_KEY_HERE";
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const form = document.getElementById("courierForm");
-    const message = document.getElementById("message");
-    const routeButton = document.getElementById("routeButton");
-    const routeStatus = document.getElementById("routeStatus");
-    const routeMapElement = document.getElementById("routeMap");
-    const FUEL_LITRES_PER_100_KM = 5.9;
-    const PETROL_PRICE_PER_LITRE = 30.25;
-    let RouteClass = null;
-    let routeMap = null;
-    let routeLines = [];
-    let currentRoute = null;
-    let calculatedFor = "";
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const form = document.getElementById("quoteForm");
+    const submitButton = document.getElementById("submitButton");
+    const formMessage = document.getElementById("formMessage");
 
-    function addressPair() {
-      return [document.getElementById("pickup").value.trim(), document.getElementById("delivery").value.trim()];
-    }
-    function pairKey() { return addressPair().join("\n"); }
-
-    async function loadGoogleMaps() {
-      if (!GOOGLE_MAPS_API_KEY || GOOGLE_MAPS_API_KEY.includes("ADD_RESTRICTED")) {
-        throw new Error("Google Maps key has not been added yet.");
-      }
-      if (!window.googleMapsReady) {
-        window.googleMapsReady = new Promise((resolve, reject) => {
-          window.googleMapsReadyCallback = resolve;
-          const script = document.createElement("script");
-          script.src = "https://maps.googleapis.com/maps/api/js?key=" + encodeURIComponent(GOOGLE_MAPS_API_KEY) + "&v=weekly&loading=async&callback=googleMapsReadyCallback";
-          script.async = true;
-          script.onerror = () => reject(new Error("Google Maps could not load."));
-          document.head.appendChild(script);
-        });
-      }
-      await window.googleMapsReady;
-      const [{ Map }, { Route }] = await Promise.all([
-        google.maps.importLibrary("maps"),
-        google.maps.importLibrary("routes")
-      ]);
-      RouteClass = Route;
-      if (!routeMap) {
-        routeMap = new Map(routeMapElement, {
-          center: { lat: -25.7479, lng: 28.2293 },
-          zoom: 10,
-          mapTypeControl: false,
-          streetViewControl: false,
-        });
-      }
+    function showError(message) {
+      formMessage.className = "message error";
+      formMessage.textContent = message;
     }
 
-    async function calculateRoute() {
-      const [pickup, delivery] = addressPair();
-      if (!pickup || !delivery) {
-        routeStatus.textContent = "Enter both addresses before calculating the route.";
-        return false;
-      }
-      routeButton.disabled = true;
-      routeButton.textContent = "Calculating…";
-      routeStatus.textContent = "Finding the driving route…";
-      try {
-        await loadGoogleMaps();
-        const result = await RouteClass.computeRoutes({
-          origin: pickup + ", South Africa",
-          destination: delivery + ", South Africa",
-          travelMode: "DRIVING",
-          region: "ZA",
-          fields: ["path", "distanceMeters", "durationMillis"]
-        });
-        const route = result.routes && result.routes[0];
-        if (!route || !Number.isFinite(route.distanceMeters)) throw new Error("Google Maps could not find a driving route. Check both addresses.");
-        routeLines.forEach(line => line.setMap(null));
-        routeLines = route.createPolylines();
-        routeLines.forEach(line => line.setMap(routeMap));
-        routeMapElement.style.display = "block";
-        const bounds = new google.maps.LatLngBounds();
-        route.path.forEach(point => bounds.extend(point));
-        routeMap.fitBounds(bounds);
-        currentRoute = {
-          distanceMeters: route.distanceMeters,
-          distanceKm: Math.round((route.distanceMeters / 1000) * 10) / 10,
-          durationMillis: route.durationMillis || null
-        };
-        calculatedFor = pairKey();
-        const minutes = route.durationMillis ? Math.round(route.durationMillis / 60000) : null;
-        const fuelLitres = currentRoute.distanceKm * FUEL_LITRES_PER_100_KM / 100;
-        const fuelCost = fuelLitres * PETROL_PRICE_PER_LITRE;
-        routeStatus.textContent = "Estimated driving distance: " + currentRoute.distanceKm.toFixed(1) + " km" +
-          (minutes ? " · about " + minutes + " min" : "") +
-          ". Fuel estimate for this leg: " + fuelLitres.toFixed(2) + " L (R" + fuelCost.toFixed(2) +
-          "). Excludes driver travel to pickup and after delivery.";
-        return true;
-      } catch (error) {
-        currentRoute = null;
-        calculatedFor = "";
-        routeStatus.textContent = error.message || "Route calculation failed. SG Courier can check the route manually.";
-        return false;
-      } finally {
-        routeButton.disabled = false;
-        routeButton.textContent = "Calculate route distance";
-      }
-    }
-
-    routeButton.addEventListener("click", calculateRoute);
-    ["pickup", "delivery"].forEach(id => document.getElementById(id).addEventListener("input", () => {
-      if (pairKey() !== calculatedFor) {
-        currentRoute = null;
-        routeStatus.textContent = "Address changed. Calculate the route again.";
-      }
-    }));
-
-    function rangeUpperBound(value) {
-      const upper = { "0-2": 2, "2-5": 5, "5-10": 10, "10-20": 20 };
-      return Object.prototype.hasOwnProperty.call(upper, value) ? upper[value] : null;
-    }
-
-    form.addEventListener("submit", async event => {
+    form.addEventListener("submit", async (event) => {
       event.preventDefault();
-      const button = document.getElementById("submitButton");
-      const [pickupAddress, deliveryAddress] = addressPair();
-      let routeCalculated = Boolean(currentRoute && calculatedFor === pairKey());
-      if (!routeCalculated) routeCalculated = await calculateRoute();
-      button.disabled = true;
-      button.textContent = "Sending request…";
-      message.textContent = "";
-      const range = document.getElementById("weightRange").value;
-      try {
-        await addDoc(collection(db, "deliveryRequests"), {
-          name: document.getElementById("name").value.trim(),
-          phone: document.getElementById("phone").value.trim(),
-          pickupAddress,
-          deliveryAddress,
-          recipientName: document.getElementById("recipient").value.trim(),
-          recipientPhone: document.getElementById("recipientPhone").value.trim(),
-          parcelType: document.getElementById("parcel").value,
-          parcelSize: document.getElementById("parcelSize").value,
-          weightRange: range,
-          weightRangeLabel: document.getElementById("weightRange").selectedOptions[0].text,
-          weightKg: rangeUpperBound(range),
-          distanceKm: routeCalculated ? currentRoute.distanceKm : null,
-          distanceMeters: routeCalculated ? currentRoute.distanceMeters : null,
-          fuelConsumptionLitresPer100Km: FUEL_LITRES_PER_100_KM,
-          petrolPricePerLitre: PETROL_PRICE_PER_LITRE,
-          routeFuelEstimateLitres: routeCalculated ? currentRoute.distanceKm * FUEL_LITRES_PER_100_KM / 100 : null,
-          routeFuelEstimateZar: routeCalculated ? currentRoute.distanceKm * FUEL_LITRES_PER_100_KM / 100 * PETROL_PRICE_PER_LITRE : null,
-          estimatedDurationMillis: routeCalculated ? currentRoute.durationMillis : null,
-          routeProvider: routeCalculated ? "Google Maps Routes" : null,
-          routeStatus: routeCalculated ? "calculated" : "manual_check_required",
-          notes: document.getElementById("notes").value.trim(),
-          status: "new",
-          createdAt: serverTimestamp()
-        });
-        message.textContent = routeCalculated
-          ? "Request sent with an estimated " + currentRoute.distanceKm.toFixed(1) + " km route. SG Courier will confirm your quote."
-          : "Request sent. SG Courier will check the route and confirm your quote.";
-        form.reset();
-        currentRoute = null;
-        calculatedFor = "";
-        routeLines.forEach(line => line.setMap(null));
-        routeLines = [];
-        routeMapElement.style.display = "none";
-        routeStatus.textContent = "Distance has not been calculated yet.";
-      } catch (error) {
-        console.error("Request submission failed:", error);
-        message.textContent = "The request could not be saved. Please contact SG Courier and share this message.";
-      } finally {
-        button.disabled = false;
-        button.textContent = "Send Delivery Request";
+      if (!form.reportValidity()) return;
+
+      const formData = new FormData(form);
+      const selectedWeight = String(formData.get("weight") || "not_sure");
+      let weightKg = "Not sure";
+
+      if (selectedWeight !== "not_sure") {
+        weightKg = Number(selectedWeight);
       }
+
+      const reference = "SG-" + Date.now().toString(36).toUpperCase();
+
+      const requestData = {
+        name: String(formData.get("sender") || "").trim(),
+        customerName: String(formData.get("sender") || "").trim(),
+        phone: String(formData.get("phone") || "").trim(),
+        customerPhone: String(formData.get("phone") || "").trim(),
+        recipientName: String(formData.get("recipient") || "").trim(),
+        recipientPhone: String(formData.get("recipientPhone") || "").trim(),
+        pickupAddress: String(formData.get("pickup") || "").trim(),
+        deliveryAddress: String(formData.get("dropoff") || "").trim(),
+        parcelType: String(formData.get("parcel") || "").trim(),
+        weightKg: weightKg,
+        weightBand: document.getElementById("weight").selectedOptions[0].text,
+        lengthCm: formData.get("lengthCm") ? Number(formData.get("lengthCm")) : null,
+        widthCm: formData.get("widthCm") ? Number(formData.get("widthCm")) : null,
+        heightCm: formData.get("heightCm") ? Number(formData.get("heightCm")) : null,
+        distanceKm: "Awaiting Google route calculation",
+        distanceStatus: "pending",
+        notes: String(formData.get("notes") || "").trim(),
+        reference: reference,
+        status: "new",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      submitButton.disabled = true;
+      submitButton.textContent = "Sending request…";
+      formMessage.className = "message";
+      formMessage.textContent = "";
+
+      try {
+        await db.collection("deliveryRequests").add(requestData);
+        document.getElementById("reference").textContent = reference;
+        document.getElementById("formPanel").style.display = "none";
+        document.getElementById("successPanel").style.display = "block";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } catch (error) {
+        console.error("Could not save delivery request:", error);
+        showError("The request could not be sent. Please check your internet connection and try again. If it keeps failing, the Firestore rules may need to allow customer requests.");
+        submitButton.disabled = false;
+        submitButton.textContent = "Send quote request";
+      }
+    });
+
+    document.getElementById("anotherButton").addEventListener("click", () => {
+      form.reset();
+      formMessage.className = "message";
+      formMessage.textContent = "";
+      submitButton.disabled = false;
+      submitButton.textContent = "Send quote request";
+      document.getElementById("successPanel").style.display = "none";
+      document.getElementById("formPanel").style.display = "block";
+      window.scrollTo({ top: 0, behavior: "smooth" });
     });
   </script>
 </body>
