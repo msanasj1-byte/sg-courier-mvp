@@ -208,6 +208,9 @@
       measurementId: "G-KXQGW871V3"
     };
 
+    // Paste your restricted Google Maps browser key here. Keep Website + API restrictions enabled.
+    const GOOGLE_MAPS_API_KEY = "PASTE_YOUR_RESTRICTED_GOOGLE_MAPS_KEY_HERE";
+
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
@@ -412,6 +415,90 @@
       return cell;
     }
 
+
+    let googleMapsLoadPromise = null;
+
+    function loadGoogleMaps() {
+      if (window.google && window.google.maps && window.google.maps.importLibrary) {
+        return Promise.resolve();
+      }
+      if (!GOOGLE_MAPS_API_KEY || GOOGLE_MAPS_API_KEY.includes("PASTE_YOUR_")) {
+        return Promise.reject(new Error("Paste your restricted Google Maps key into admin.html first."));
+      }
+      if (googleMapsLoadPromise) return googleMapsLoadPromise;
+
+      googleMapsLoadPromise = new Promise((resolve, reject) => {
+        window.__sgCourierMapsLoaded = resolve;
+        const script = document.createElement("script");
+        script.src =
+          "https://maps.googleapis.com/maps/api/js?key=" +
+          encodeURIComponent(GOOGLE_MAPS_API_KEY) +
+          "&v=weekly&callback=__sgCourierMapsLoaded";
+        script.async = true;
+        script.onerror = () => reject(new Error("Google Maps could not load. Check the key, website restriction, APIs, and billing."));
+        document.head.appendChild(script);
+      });
+      return googleMapsLoadPromise;
+    }
+
+    function makeDistanceCell(request) {
+      const cell = document.createElement("td");
+      const value = document.createElement("div");
+      value.style.marginBottom = "6px";
+      value.textContent = requestDistance(request);
+      cell.appendChild(value);
+
+      const note = document.createElement("div");
+      note.style.fontSize = "12px";
+      note.style.marginBottom = "6px";
+      cell.appendChild(note);
+
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = request.distanceKm ? "Recalculate route" : "Calculate route";
+      button.style.minWidth = "150px";
+      button.style.fontSize = "13px";
+      button.addEventListener("click", async () => {
+        const addresses = requestAddresses(request);
+        if (!addresses.pickup || !addresses.destination) {
+          note.textContent = "This request needs both pickup and destination addresses.";
+          return;
+        }
+        button.disabled = true;
+        note.textContent = "Calculating driving distance…";
+        try {
+          await loadGoogleMaps();
+          const { Route } = await google.maps.importLibrary("routes");
+          const result = await Route.computeRoutes({
+            origin: addresses.pickup + ", South Africa",
+            destination: addresses.destination + ", South Africa",
+            travelMode: "DRIVING",
+            fields: ["distanceMeters"]
+          });
+          const route = result.routes && result.routes[0];
+          if (!route || !Number.isFinite(route.distanceMeters)) {
+            throw new Error("Google did not return a driving distance for these addresses.");
+          }
+          const km = Math.round((route.distanceMeters / 1000) * 10) / 10;
+          await db.collection("deliveryRequests").doc(request.id).update({
+            distanceKm: km,
+            distanceMeters: route.distanceMeters,
+            distanceSource: "Google Routes",
+            distanceCalculatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          value.textContent = km.toFixed(1) + " km";
+          note.textContent = "Google driving route saved.";
+        } catch (error) {
+          console.error("Route calculation failed:", error);
+          note.textContent = error.message || "Route calculation failed. Check Google Maps setup and Firestore rules.";
+        } finally {
+          button.disabled = false;
+        }
+      });
+      cell.appendChild(button);
+      return cell;
+    }
+
     function renderRequests(snapshot) {
       const requests = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
       requests.sort((a, b) => {
@@ -463,7 +550,7 @@
         appendCell(row, addresses.pickup);
         appendCell(row, addresses.destination);
         appendCell(row, requestWeight(request).label);
-        appendCell(row, requestDistance(request));
+        row.appendChild(makeDistanceCell(request));
         appendCell(row, request.status || "new");
         row.appendChild(makeQuoteCell(request));
         requestsTableBody.appendChild(row);
