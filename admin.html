@@ -80,7 +80,7 @@
     .table-wrap { overflow-x: auto; }
 
     table {
-      min-width: 720px;
+      min-width: 920px;
       width: 100%;
       border-collapse: collapse;
       margin-top: 10px;
@@ -177,6 +177,8 @@
               <th>Customer</th>
               <th>Pickup</th>
               <th>Destination</th>
+              <th>Parcel weight</th>
+              <th>Distance</th>
               <th>Status</th>
               <th>Quote</th>
             </tr>
@@ -239,40 +241,106 @@
       row.appendChild(cell);
     }
 
+    function firstValue(request, keys) {
+      for (const key of keys) {
+        const value = key.includes(".")
+          ? key.split(".").reduce((object, part) => object && object[part], request)
+          : request[key];
+        if (value !== undefined && value !== null && String(value).trim() !== "") return value;
+      }
+      return "";
+    }
+
+    function requestAddresses(request) {
+      return {
+        pickup: String(firstValue(request, [
+          "pickupAddress", "pickup", "pickupLocation", "pickup_address",
+          "fromAddress", "collectionAddress", "collectionLocation"
+        ])).trim(),
+        destination: String(firstValue(request, [
+          "deliveryAddress", "destination", "dropoffAddress", "dropoff",
+          "deliveryLocation", "delivery_address", "toAddress", "destinationAddress"
+        ])).trim()
+      };
+    }
+
+    function requestWeight(request) {
+      const raw = firstValue(request, [
+        "weightKg", "parcelWeightKg", "weight_kg", "parcel_weight_kg",
+        "parcelWeight", "weight", "packageWeight", "parcel.weightKg",
+        "parcel.weight", "parcelDetails.weightKg"
+      ]);
+      if (raw === "") return { raw: "", kg: null, label: "Not provided" };
+
+      const label = typeof raw === "number" ? raw + " kg" : String(raw).trim();
+      const range = label.match(/(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)/);
+      const numeric = range ? Number(range[2]) : Number.parseFloat(label);
+      if (!Number.isFinite(numeric) || numeric < 0) return { raw, kg: null, label };
+      return { raw, kg: numeric, label: /kg/i.test(label) ? label : label + " kg" };
+    }
+
+    function requestDistance(request) {
+      const raw = firstValue(request, [
+        "distanceKm", "routeDistanceKm", "distance_km", "estimatedDistanceKm",
+        "route.distanceKm", "distance"
+      ]);
+      if (raw === "") return "Not recorded";
+      const match = String(raw).match(/\d+(?:\.\d+)?/);
+      if (!match) return String(raw).trim();
+      const km = Number(match[0]);
+      return Number.isFinite(km) ? km.toFixed(1) + " km" : "Not recorded";
+    }
+
     function suggestedPrice(request) {
-      const pickup = String(request.pickupAddress || "").toLowerCase();
-      const destination = String(request.deliveryAddress || "").toLowerCase();
-      if (request.weightKg === null || request.weightKg === undefined || request.weightKg === "") return null;
-      const weight = Number(request.weightKg);
-      if (!Number.isFinite(weight) || weight < 0) return null;
+      const addresses = requestAddresses(request);
+      const pickup = addresses.pickup.toLowerCase();
+      const destination = addresses.destination.toLowerCase();
+      const weight = requestWeight(request);
 
       let prices = null;
+      let routeLabel = "";
       if (pickup.includes("soshanguve") && destination.includes("soshanguve")) {
         prices = [55, 65, 80, 110];
+        routeLabel = "Soshanguve → Soshanguve";
       } else if (pickup.includes("soshanguve") && destination.includes("mabopane")) {
         prices = [70, 80, 100, 130];
-      } else {
-        return null;
+        routeLabel = "Soshanguve → Mabopane";
       }
 
-      if (weight <= 2) return prices[0];
-      if (weight <= 5) return prices[1];
-      if (weight <= 10) return prices[2];
-      if (weight <= 20) return prices[3];
-      return null;
+      if (weight.kg === null) {
+        return { amount: null, tier: "", route: routeLabel,
+          reason: "Weight was not saved with this request. Enter a quote manually and check the customer form's weight field." };
+      }
+      if (!prices) return { amount: null, tier: "", route: routeLabel,
+        reason: "Manual quote: no saved price for this route." };
+      if (weight.kg <= 0) return { amount: null, tier: "", route: routeLabel,
+        reason: "Enter a parcel weight above 0 kg to get a price suggestion." };
+      if (weight.kg <= 2) return { amount: prices[0], tier: "0–2 kg", route: routeLabel };
+      if (weight.kg <= 5) return { amount: prices[1], tier: "over 2–5 kg", route: routeLabel };
+      if (weight.kg <= 10) return { amount: prices[2], tier: "over 5–10 kg", route: routeLabel };
+      if (weight.kg <= 20) return { amount: prices[3], tier: "over 10–20 kg", route: routeLabel };
+      return { amount: null, tier: "", route: routeLabel,
+        reason: "Manual quote: parcel is over 20 kg." };
     }
 
     function makeQuoteCell(request) {
       const cell = document.createElement("td");
       const suggestion = suggestedPrice(request);
       const savedQuote = Number(request.quoteAmount);
-      const amount = Number.isFinite(savedQuote) && savedQuote > 0 ? savedQuote : suggestion;
+      const amount = Number.isFinite(savedQuote) && savedQuote > 0 ? savedQuote : suggestion.amount;
+      const weight = requestWeight(request);
+      const weightLine = document.createElement("div");
+      weightLine.style.fontSize = "13px";
+      weightLine.style.marginBottom = "6px";
+      weightLine.textContent = "Parcel weight: " + weight.label;
+      cell.appendChild(weightLine);
+
       const hint = document.createElement("div");
       hint.style.fontSize = "12px";
       hint.style.marginBottom = "6px";
-      hint.textContent = suggestion === null
-        ? "Manual quote: no saved price for this route/weight."
-        : "Suggested: R" + suggestion.toFixed(2);
+      hint.textContent = suggestion.amount !== null
+        ? "Suggested: R" + suggestion.amount.toFixed(2) + " (" + suggestion.tier + ")"
+        : suggestion.reason;
       cell.appendChild(hint);
 
       const input = document.createElement("input");
@@ -303,18 +371,19 @@
           return;
         }
 
-        let phone = String(request.phone || "").replace(/\D/g, "");
+        let phone = String(request.phone || request.customerPhone || "").replace(/\D/g, "");
         if (phone.startsWith("0")) phone = "27" + phone.slice(1);
         if (phone.length < 9) {
           note.textContent = "This request has no valid phone number.";
           return;
         }
 
+        const addresses = requestAddresses(request);
         const message =
-          "Hello " + (request.name || "Customer") +
+          "Hello " + (request.name || request.customerName || "Customer") +
           ", SG Courier's delivery quote is R" + quote.toFixed(2) +
-          " for delivery from " + (request.pickupAddress || "your pickup address") +
-          " to " + (request.deliveryAddress || "your delivery address") +
+          " for delivery from " + (addresses.pickup || "your pickup address") +
+          " to " + (addresses.destination || "your delivery address") +
           ". Please reply here to accept or discuss this quote.";
         const whatsappUrl = "https://wa.me/" + phone + "?text=" + encodeURIComponent(message);
         const whatsappTab = window.open("about:blank", "_blank");
@@ -371,7 +440,7 @@
       if (requests.length === 0) {
         const row = document.createElement("tr");
         const cell = document.createElement("td");
-        cell.colSpan = 5;
+        cell.colSpan = 7;
         cell.className = "empty";
         cell.textContent = "No customer requests yet.";
         row.appendChild(cell);
@@ -390,8 +459,11 @@
           customer.appendChild(document.createTextNode(request.phone));
         }
         row.appendChild(customer);
-        appendCell(row, request.pickupAddress);
-        appendCell(row, request.deliveryAddress);
+        const addresses = requestAddresses(request);
+        appendCell(row, addresses.pickup);
+        appendCell(row, addresses.destination);
+        appendCell(row, requestWeight(request).label);
+        appendCell(row, requestDistance(request));
         appendCell(row, request.status || "new");
         row.appendChild(makeQuoteCell(request));
         requestsTableBody.appendChild(row);
@@ -417,7 +489,7 @@
           requestsTableBody.replaceChildren();
           const row = document.createElement("tr");
           const cell = document.createElement("td");
-          cell.colSpan = 5;
+          cell.colSpan = 7;
           cell.className = "empty";
           cell.textContent = "Could not load requests. Please check the Firestore rules.";
           row.appendChild(cell);
@@ -442,4 +514,3 @@
   </script>
 </body>
 </html>
-
